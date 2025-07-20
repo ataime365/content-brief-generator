@@ -5,7 +5,7 @@ A simple JavaScript web app to generate SEO content briefs using an n8n webhook 
 
 ## Features
 - User input form for content brief generation
-- POSTs to webhook: https://usegrowthaic.app.n8n.cloud/webhook/content-brief-generator
+- POSTs to n8n webhook: https://usegrowthaic.app.n8n.cloud/webhook/content-brief-generator
 - Displays structured LLM response
 - Uses TailwindCSS for layout and styling
 
@@ -13,8 +13,8 @@ A simple JavaScript web app to generate SEO content briefs using an n8n webhook 
 
 ### 1. Clone the repository
 ```
-git clone <repo-url>
-cd <project-folder>
+git clone https://github.com/ataime365/content-brief-generator.git
+cd content-brief-generator
 npm init -y
 ```
 
@@ -34,7 +34,7 @@ Visit `http://localhost:3001`
 ### 5. n8n
 Import the n8n json into your n8n and use your Perplexity and Openai Key to Authenticate
 
-### 6 Change the webhook url
+### 6. Change the webhook url
 In the server.js Use your n8n webhook production url
 
 
