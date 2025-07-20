@@ -15,11 +15,11 @@ A simple JavaScript web app to generate SEO content briefs using an n8n webhook 
 ```
 git clone https://github.com/ataime365/content-brief-generator.git
 cd content-brief-generator
-npm init -y
 ```
 
-### 2. Install dependencies
+### 2. Initialize repository & Install dependencies
 ```
+npm init -y
 npm install express body-parser cors node-fetch dotenv
 ```
 
