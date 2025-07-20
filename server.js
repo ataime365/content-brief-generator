@@ -26,7 +26,7 @@ app.post('/api/generate-brief', async (req, res) => {
   const { primaryKeyword, secondaryKeywords, targetWordCount } = req.body;
 
   try {
-    const response = await fetch('https://usegrowthaic.app.n8n.cloud/webhook/content-brief-generator', {
+    const response = await fetch(process.env.N8N_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ primaryKeyword, secondaryKeywords, targetWordCount }),
