@@ -34,7 +34,7 @@ Visit `http://localhost:3001`
 ### 5. n8n
 Import the n8n json into your n8n and use your Perplexity and Openai Key to Authenticate
 
-### 9. Change the webhook url
+### 6 Change the webhook url
 In the server.js Use your n8n webhook production url
 
 
