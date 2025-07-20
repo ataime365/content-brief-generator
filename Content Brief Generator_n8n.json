@@ -1,0 +1,533 @@
+{
+  "name": "Content Brief Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a professional SEO content strategist assistant.\n\nYour job is to take research material and convert it into a structured blog post content brief. The goal is to help a writer create an informative, SEO-optimized article.\n\nUsing the research provided, generate the following JSON structure:\n\n{\n  \"suggested_titles\": [ \"Title Option 1\", \"Title Option 2\", \"Title Option 3\" ],\n  \"outline\": [\n    \"Introduction\",\n    \"Section 1: ...\",\n    \"Section 2: ...\",\n    \"Section 3: ...\",\n    \"Conclusion\"\n  ],\n  \"key_points_to_cover\": [\n    \"Point 1\",\n    \"Point 2\",\n    \"Point 3\"\n  ],\n  \"recommended_sources_or_statistics\": [\n    \"Source 1 - URL or citation\",\n    \"Statistic 1 - with context\",\n    \"Source 2 - URL or citation\"\n  ]\n}\n\nGuidelines:\n- Choose titles that are SEO-friendly and compelling\n- Organize sections logically based on user intent\n- Key points must support the primary topic and keywords\n- Use real sources/stats where possible from the research\n- Scope should match the expected word count\n",
+              "role": "system"
+            },
+            {
+              "content": "=Please create a structured content brief using the research below:\n\nContent: {{ $json.choices[0].message.content }}\n\nCitations/References: {{ $json.citations }}\n\nSearch Results: {{ $json.search_results }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -160,
+        288
+      ],
+      "id": "7e1d7b63-dbd2-480f-b0e9-6c0728ebd0bd",
+      "name": "Plan Blog Post",
+      "credentials": {
+        "openAiApi": {
+          "id": "WtNgfmaRmBNVrv5g",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Blog Research and Planning\n",
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        80
+      ],
+      "id": "1b38dcbd-1492-4b2f-b749-6150c9ed55b6",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "model": "sonar-pro",
+        "messages": {
+          "message": [
+            {
+              "content": "=You are a research assistant for SEO content writers.\n\nYour task is to gather valuable and relevant research based on a blog topic. Use your knowledge and reasoning to identify:\n- Common subtopics and angles covered by top-ranking pages\n- Frequently asked questions or search intent patterns\n- Supporting statistics or facts\n- Related keywords or topics to include\n- Helpful resources or references\n\nThis research will be passed to another assistant who will convert it into a structured blog post brief. Therefore, your output must be rich and detailed enough to support a complete blog post with a target word count of {{ $json.targetWordCount }} words.\n\nIf the target word count is high, include more depth, subtopics, statistics, and supporting data to fully inform a comprehensive article.\n\nPlease present the results in the following format:\n\nResearch Summary:\n- Overview of topic trends and searcher intent\n\nRecommended Subtopics and Sections:\n- Bullet list of 5–8 useful sections (more if word count is high)\n\nSupporting Statistics or Points:\n- Bullet list with citations if possible\n\nUseful References:\n- List of URLs or names of sources\n\nDo not return the content in JSON or Markdown. Use plain text only.\n",
+              "role": "system"
+            },
+            {
+              "content": "=Please provide detailed research to help prepare a blog post on the following topic.\n\nPrimary Keyword: {{ $json.body.primaryKeyword }}  \nSecondary Keywords: {{ $json.body.secondaryKeywords }}  \nTarget Word Count: {{ $json.body.targetWordCount }}  \n\nThe goal is to gather:\n- An overview of topic trends and searcher intent  \n- Suggested subtopics and sections  \n- Relevant statistics or data points  \n- Helpful references or sources  \n\nThis information will be passed to another assistant to structure a final blog content brief.\n"
+            }
+          ]
+        },
+        "options": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.perplexity",
+      "typeVersion": 1,
+      "position": [
+        -352,
+        288
+      ],
+      "id": "be977f80-df7a-46b9-b3fb-4e8e5c180914",
+      "name": "Perplexity: Do Research",
+      "credentials": {
+        "perplexityApi": {
+          "id": "smvyMiXf8p5cyBjX",
+          "name": "Perplexity account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "content-brief-generator",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        288
+      ],
+      "id": "6641f631-5ce1-4f64-acc1-37eeaa80a56c",
+      "name": "Webhook",
+      "webhookId": "36e923dc-a16c-43ea-973c-bef05bfaf441"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        640,
+        288
+      ],
+      "id": "3a3a4b5e-44af-439b-b001-8a5478b9ccd4",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f031b989-1857-4243-8544-7a37dc18d4c0",
+              "name": "suggestedTitles",
+              "value": "={{ $json.message.content.suggested_titles }}",
+              "type": "array"
+            },
+            {
+              "id": "291d286c-45fd-40bc-b553-fb8253c35bdc",
+              "name": "outline",
+              "value": "={{ $json.message.content.outline }}",
+              "type": "array"
+            },
+            {
+              "id": "83488354-a53a-4fbe-952d-4fe83198242c",
+              "name": "keyPointsToCover",
+              "value": "={{ $json.message.content.key_points_to_cover }}",
+              "type": "array"
+            },
+            {
+              "id": "3f5ade2d-9030-4097-a4a5-83461875a8aa",
+              "name": "recommendedSourcesOrStatistics",
+              "value": "={{ $json.message.content.recommended_sources_or_statistics }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        288
+      ],
+      "id": "31d8a516-8011-4fd9-a432-4b58308a5f47",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        416,
+        288
+      ],
+      "id": "a547a4cc-049b-4851-ac24-37152ec7716d",
+      "name": "Aggregate"
+    }
+  ],
+  "pinData": {
+    "Perplexity: Do Research": [
+      {
+        "json": {
+          "id": "cf83ce41-f91a-4edf-b43d-9858deb8dca5",
+          "model": "sonar-deep-research",
+          "created": 1753033142,
+          "usage": {
+            "prompt_tokens": 353,
+            "completion_tokens": 1260,
+            "total_tokens": 1613,
+            "citation_tokens": 10393,
+            "num_search_queries": 14,
+            "reasoning_tokens": 58629
+          },
+          "citations": [
+            "https://www.youtube.com/watch?v=ZCea2h1nrAE",
+            "https://atlantastonecreations.com/the-hottest-home-renovation-trends-for-2025/",
+            "https://www.gentek.ca/blog/5-most-googled-home-improvement-trends/",
+            "https://westwoodinsurance.com/news/top-8-home-renovation-trends-for-2025/",
+            "https://fatcatstrategies.com/marketing/google-trends-how-to-empower-marketing-efforts/",
+            "https://www.nar.realtor/blogs/styled-staged-sold/10-hottest-home-design-trends-to-watch-for-2025",
+            "https://fatcatstrategies.com/marketing/use-google-trends-for-home-improvement-prospect-research/",
+            "https://www.housebeautiful.com/uk/decorate/a65087087/houzz-2025-design-trends/",
+            "https://www.contractormag.com/bath-kitchen/remodeling/article/55135146/study-finds-bathroom-remodels-most-popular-home-renovation-project",
+            "https://www.statista.com/topics/9439/diy-home-improvement-projects-in-the-us/",
+            "https://cabinetselect.com/kitchen-remodel-roi/",
+            "https://www.revive.realestate/post/how-much-value-does-a-bathroom-remodel-increase-home-value",
+            "https://www.hommati.com/blog/12-common-house-renovation-mistakes-to-avoid-for-sellers",
+            "https://www.furnituretoday.com/research-and-analysis/which-room-are-consumers-considering-for-renovation-survey-studied-search-terms-to-find-out/",
+            "https://www.thefarnsworthgroup.com/blog/diy-difm-pro-home-improvement-trends",
+            "https://www.angi.com/articles/how-much-does-a-kitchen-remodel-increase-home-value.htm",
+            "https://www.davefox.com/resource-center/whole-home-remodeling-steps-checklist",
+            "https://www.bankrate.com/loans/home-improvement/diy-home-improvement-on-a-budget",
+            "https://www.extraspace.com/blog/moving/tips-for-planning-a-home-renovation/"
+          ],
+          "search_results": [
+            {
+              "title": "How To Use Google Trends To Find Home Improvement Trends?",
+              "url": "https://www.youtube.com/watch?v=ZCea2h1nrAE",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "The Hottest Home Renovation Trends for 2025",
+              "url": "https://atlantastonecreations.com/the-hottest-home-renovation-trends-for-2025/",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "5 Most-Googled Home Improvement Trends - Gentek Canada",
+              "url": "https://www.gentek.ca/blog/5-most-googled-home-improvement-trends/",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "Top 8 Home Renovation Trends for 2025",
+              "url": "https://westwoodinsurance.com/news/top-8-home-renovation-trends-for-2025/",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "How to Use Google Trends to Boost Your Home Improvement ...",
+              "url": "https://fatcatstrategies.com/marketing/google-trends-how-to-empower-marketing-efforts/",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "10 Hottest Home Design Trends to Watch for 2025",
+              "url": "https://www.nar.realtor/blogs/styled-staged-sold/10-hottest-home-design-trends-to-watch-for-2025",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "Using Google Trends to find what Home Improvement Prospects ...",
+              "url": "https://fatcatstrategies.com/marketing/use-google-trends-for-home-improvement-prospect-research/",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "The 2025 Home Upgrades Everyone's Talking About - House Beautiful",
+              "url": "https://www.housebeautiful.com/uk/decorate/a65087087/houzz-2025-design-trends/",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "Study Finds Bathroom Remodels Most Popular Home Renovation ...",
+              "url": "https://www.contractormag.com/bath-kitchen/remodeling/article/55135146/study-finds-bathroom-remodels-most-popular-home-renovation-project",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "DIY home improvement projects in the U.S. - statistics & facts",
+              "url": "https://www.statista.com/topics/9439/diy-home-improvement-projects-in-the-us/",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "Kitchen Remodel ROI Strategies That Work In Today's Market",
+              "url": "https://cabinetselect.com/kitchen-remodel-roi/",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "How Much Does a Bathroom Remodel Increase Home Value?",
+              "url": "https://www.revive.realestate/post/how-much-value-does-a-bathroom-remodel-increase-home-value",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "12 Common House Renovation Mistakes to Avoid for Sellers",
+              "url": "https://www.hommati.com/blog/12-common-house-renovation-mistakes-to-avoid-for-sellers",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "Which room are consumers considering for renovation? Survey ...",
+              "url": "https://www.furnituretoday.com/research-and-analysis/which-room-are-consumers-considering-for-renovation-survey-studied-search-terms-to-find-out/",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "DIY, DIFM, and PRO Home Improvement Trends from Q4 ...",
+              "url": "https://www.thefarnsworthgroup.com/blog/diy-difm-pro-home-improvement-trends",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "How Much Does a Kitchen Remodel Increase Home Value? | Angi",
+              "url": "https://www.angi.com/articles/how-much-does-a-kitchen-remodel-increase-home-value.htm",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "Home Remodeling Steps: A Checklist to Help Plan and Organize ...",
+              "url": "https://www.davefox.com/resource-center/whole-home-remodeling-steps-checklist",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "10 Home Renovations You Can DIY on a Budget",
+              "url": "https://www.bankrate.com/loans/home-improvement/diy-home-improvement-on-a-budget",
+              "date": null,
+              "last_updated": null
+            },
+            {
+              "title": "9 Tips for Planning a Home Renovation",
+              "url": "https://www.extraspace.com/blog/moving/tips-for-planning-a-home-renovation/",
+              "date": null,
+              "last_updated": null
+            }
+          ],
+          "object": "chat.completion",
+          "choices": [
+            {
+              "index": 0,
+              "finish_reason": "stop",
+              "message": {
+                "role": "assistant",
+                "content": "<think>\nWe are given a query to research for a blog post on \"home renovation tips\" with secondary keywords. The target word count is 400, but note that the research must be detailed to support a blog post.\n\nSteps:\n1. Analyze the search results to gather information on home renovation trends, tips, and data.\n2. Identify common themes and searcher intent based on the search results.\n3. Extract relevant statistics and data points with citations.\n4. Formulate subtopics and sections for the blog post.\n5. Compile a list of useful references.\n\nSearcher Intent and Topic Trends:\n- The search results indicate that home improvement is a popular topic, with trends in 2025 focusing on sustainability, smart technology, and specific room renovations (especially bathrooms and kitchens).\n- Google Trends is a key tool for identifying what people are searching for in home improvement [1][5][7].\n- Popular projects: Bathroom remodels are the most searched, followed by kitchens [9][10][16].\n- Trends: Sustainable materials, smart home integration, outdoor living, and minimalism are in vogue [2][4][6].\n- DIY projects are common, with homeowners looking for budget-friendly ideas [18][10].\n- Mistakes to avoid: Hiring wrong contractors, blowing budget, neglecting measurements, and being too trendy [13].\n\nStatistics and Data Points:\n- Bathroom remodels are the most popular, with \"bathroom remodel\" getting 259,750 monthly searches on average [9].\n- Kitchen remodels have an average ROI of 96% for minor updates but only 50% for major renovations [11][16].\n- Bathroom remodels have an average ROI of 60-67%, with midrange projects returning 70.1% nationally [12].\n- In Q4, 41% of homeowners completed a home improvement project, with 55% doing it themselves (DIY) [15].\n- The home improvement market in the U.S. was worth 526.1 billion USD in 2024 [10].\n\nSuggested Subtopics and Sections:\n1. Introduction: The importance of home renovation and current trends.\n2. Top Home Renovation Trends for 2025: Cover sustainability, smart tech, and popular rooms (bathrooms and kitchens).\n3. Budget-Friendly Renovation Ideas: DIY projects and cost-effective upgrades.\n4. Kitchen and Bathroom Upgrades: Focus on high-ROI improvements and popular features.\n5. Home Remodeling Checklist: Steps for planning and executing a renovation.\n6. Common Renovation Mistakes to Avoid: Pitfalls like hiring wrong contractors, budget overruns, and measurement errors.\n7. Conclusion: Key takeaways and encouragement.\n\nReferences:\n- Atlanta Stone Creations: For 2025 renovation trends [2].\n- Contractor Magazine: For statistics on bathroom remodels [9].\n- Statista: Market size data [10].\n- Revive Real Estate: Bathroom remodel ROI [12].\n- Angi: Kitchen remodel ROI [16].\n- The Farnsworth Group: DIY trends [15].\n\nNote: The target word count for the blog post is 400, so the research should be concise but cover the essentials.\n\nNow, we present the research in the required plain text format.\n</think>\n### Research Summary:  \nHome renovation trends for 2025 emphasize sustainability, technology integration, and high-impact upgrades. Searchers primarily seek practical, budget-friendly solutions for kitchens and bathrooms—the top renovation priorities—while avoiding expensive mistakes. Intent analysis shows strong interest in ROI optimization, DIY techniques, and trend-aware planning. Google Trends reveals seasonal search patterns (e.g., roofing peaks in summer[5][7]), with \"bathroom remodel\" dominating U.S. searches at 259,750 monthly queries[9]. Content must balance cost-saving strategies (e.g., minor kitchen remodels yield 96% ROI[11][16]) with emerging design movements like biophilic accents and clover lawns[3][6].  \n\n### Recommended Subtopics and Sections:  \n1. **2025 Renovation Trends Overview**: Focus on sustainable materials and smart home tech.  \n2. **Budget Kitchen & Bathroom Upgrades**: Minor remodels with maximum ROI.  \n3. **DIY Projects for Cost Efficiency**: Safe, beginner-friendly improvements.  \n4. **Step-by-Step Renovation Checklist**: Planning, permits, and timelines.  \n5. **Top Mistakes and Solutions**: Contractor selection, budgeting, and measurement errors.  \n6. **ROI Statistics by Project**: Cost vs. value data for decision-making.  \n7. **Future-Proofing Your Home**: Trends with lasting appeal vs. passing fads.  \n\n### Supporting Statistics or Points:  \n- Minor kitchen remodels return 96% of costs, while major renovations drop to 38–50% ROI[11][16].  \n- Bathroom remodels recoup 60–70% of investment nationally, averaging $13,422–$19,378 added value[12].  \n- 41% of homeowners completed DIY projects in Q4 2024, driven by labor shortages and cost savings[15].  \n- Top searched terms: \"bathroom remodel\" (259,750/mo), \"kitchen remodel\" (148,417/mo)[9].  \n- Clover lawns surged to 6 million monthly U.S. searches in 2023 due to low maintenance[3].  \n\n### Useful References:  \n- Atlanta Stone Creations: 2025 design trends (sustainable materials, outdoor kitchens)[2].  \n- Contractor Magazine: Bathroom remodel search volume analysis[9].  \n- Journal of Light Construction: ROI data for minor vs. major remodels[11].  \n- Angi: Cost-to-value ratios for kitchen projects[16].  \n- Farnsworth Group: DIY project rates and motivations[15].  \n- Houzz: 2025 trend predictions (English-style kitchens, wood-drenched interiors)[6].  \n\n---  \n*Note: All statistics are sourced from the provided results. Focus areas align with search intent around practicality, ROI, and error avoidance for the target 400-word blog post.*"
+              },
+              "delta": {
+                "role": "assistant",
+                "content": ""
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "Edit Fields": [
+      {
+        "json": {
+          "suggestedTitles": [
+            "Top Home Renovation Tips for 2025: Trends, ROI, and Mistakes to Avoid",
+            "2025 Home Renovation Guide: Budget-Friendly Tips for Kitchens and Bathrooms",
+            "Smart Home Renovation Strategies: Trending Upgrades with High ROI"
+          ],
+          "outline": [
+            "Introduction",
+            "Section 1: Home Renovation Trends for 2025",
+            "Section 2: Budget-Friendly Kitchen and Bathroom Upgrades",
+            "Section 3: DIY Renovation Projects for Cost Savings",
+            "Section 4: Renovation Planning Checklist",
+            "Section 5: Common Renovation Mistakes to Avoid",
+            "Conclusion"
+          ],
+          "keyPointsToCover": [
+            "Highlight the most popular home renovation trends for 2025, emphasizing sustainability, smart technology, outdoor living, and minimalism.",
+            "Focus on high-ROI projects: Minor kitchen remodels (up to 96% ROI) and bathroom updates (60–70% ROI). Include top-searched renovation projects.",
+            "Present budget-friendly, DIY renovation ideas that are safe and practical for beginners, referencing increased interest in DIY.",
+            "Share a concise, actionable renovation planning checklist outlining steps from budgeting to permits.",
+            "Warn about common renovation mistakes like hiring the wrong contractor, underestimating measurements, and focusing excessively on fleeting trends."
+          ],
+          "recommendedSourcesOrStatistics": [
+            "Atlanta Stone Creations: 2025 home renovation trends (https://atlantastonecreations.com/the-hottest-home-renovation-trends-for-2025/)",
+            "Contractor Magazine: 'Bathroom remodel' is the most-searched renovation term in the US, with 259,750 average monthly searches (https://www.contractormag.com/bath-kitchen/remodeling/article/55135146/study-finds-bathroom-remodels-most-popular-home-renovation-project)",
+            "Journal of Light Construction: Minor kitchen remodels yield a 96% average ROI; major renovations can drop to 38–50% (https://cabinetselect.com/kitchen-remodel-roi/)",
+            "Revive Real Estate: Bathroom remodels return 60–70% on investment nationally and add $13,000–$19,000 in value (https://www.revive.realestate/post/how-much-value-does-a-bathroom-remodel-increase-home-value)",
+            "The Farnsworth Group: 41% of homeowners completed home improvement projects in Q4 2024, with 55% doing DIY (https://www.thefarnsworthgroup.com/blog/diy-difm-pro-home-improvement-trends)",
+            "Angi: Kitchen remodel ROI stats (https://www.angi.com/articles/how-much-does-a-kitchen-remodel-increase-home-value.htm)"
+          ]
+        }
+      }
+    ],
+    "Plan Blog Post": [
+      {
+        "json": {
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": {
+              "suggested_titles": [
+                "Top Home Renovation Tips for 2025: Trends, ROI, and Mistakes to Avoid",
+                "2025 Home Renovation Guide: Budget-Friendly Tips for Kitchens and Bathrooms",
+                "Smart Home Renovation Strategies: Trending Upgrades with High ROI"
+              ],
+              "outline": [
+                "Introduction",
+                "Section 1: Home Renovation Trends for 2025",
+                "Section 2: Budget-Friendly Kitchen and Bathroom Upgrades",
+                "Section 3: DIY Renovation Projects for Cost Savings",
+                "Section 4: Renovation Planning Checklist",
+                "Section 5: Common Renovation Mistakes to Avoid",
+                "Conclusion"
+              ],
+              "key_points_to_cover": [
+                "Highlight the most popular home renovation trends for 2025, emphasizing sustainability, smart technology, outdoor living, and minimalism.",
+                "Focus on high-ROI projects: Minor kitchen remodels (up to 96% ROI) and bathroom updates (60–70% ROI). Include top-searched renovation projects.",
+                "Present budget-friendly, DIY renovation ideas that are safe and practical for beginners, referencing increased interest in DIY.",
+                "Share a concise, actionable renovation planning checklist outlining steps from budgeting to permits.",
+                "Warn about common renovation mistakes like hiring the wrong contractor, underestimating measurements, and focusing excessively on fleeting trends."
+              ],
+              "recommended_sources_or_statistics": [
+                "Atlanta Stone Creations: 2025 home renovation trends (https://atlantastonecreations.com/the-hottest-home-renovation-trends-for-2025/)",
+                "Contractor Magazine: 'Bathroom remodel' is the most-searched renovation term in the US, with 259,750 average monthly searches (https://www.contractormag.com/bath-kitchen/remodeling/article/55135146/study-finds-bathroom-remodels-most-popular-home-renovation-project)",
+                "Journal of Light Construction: Minor kitchen remodels yield a 96% average ROI; major renovations can drop to 38–50% (https://cabinetselect.com/kitchen-remodel-roi/)",
+                "Revive Real Estate: Bathroom remodels return 60–70% on investment nationally and add $13,000–$19,000 in value (https://www.revive.realestate/post/how-much-value-does-a-bathroom-remodel-increase-home-value)",
+                "The Farnsworth Group: 41% of homeowners completed home improvement projects in Q4 2024, with 55% doing DIY (https://www.thefarnsworthgroup.com/blog/diy-difm-pro-home-improvement-trends)",
+                "Angi: Kitchen remodel ROI stats (https://www.angi.com/articles/how-much-does-a-kitchen-remodel-increase-home-value.htm)"
+              ]
+            },
+            "refusal": null,
+            "annotations": []
+          },
+          "logprobs": null,
+          "finish_reason": "stop"
+        }
+      }
+    ],
+    "Aggregate": [
+      {
+        "json": {
+          "data": [
+            {
+              "suggestedTitles": [
+                "Top Home Renovation Tips for 2025: Trends, ROI, and Mistakes to Avoid",
+                "2025 Home Renovation Guide: Budget-Friendly Tips for Kitchens and Bathrooms",
+                "Smart Home Renovation Strategies: Trending Upgrades with High ROI"
+              ],
+              "outline": [
+                "Introduction",
+                "Section 1: Home Renovation Trends for 2025",
+                "Section 2: Budget-Friendly Kitchen and Bathroom Upgrades",
+                "Section 3: DIY Renovation Projects for Cost Savings",
+                "Section 4: Renovation Planning Checklist",
+                "Section 5: Common Renovation Mistakes to Avoid",
+                "Conclusion"
+              ],
+              "keyPointsToCover": [
+                "Highlight the most popular home renovation trends for 2025, emphasizing sustainability, smart technology, outdoor living, and minimalism.",
+                "Focus on high-ROI projects: Minor kitchen remodels (up to 96% ROI) and bathroom updates (60–70% ROI). Include top-searched renovation projects.",
+                "Present budget-friendly, DIY renovation ideas that are safe and practical for beginners, referencing increased interest in DIY.",
+                "Share a concise, actionable renovation planning checklist outlining steps from budgeting to permits.",
+                "Warn about common renovation mistakes like hiring the wrong contractor, underestimating measurements, and focusing excessively on fleeting trends."
+              ],
+              "recommendedSourcesOrStatistics": [
+                "Atlanta Stone Creations: 2025 home renovation trends (https://atlantastonecreations.com/the-hottest-home-renovation-trends-for-2025/)",
+                "Contractor Magazine: 'Bathroom remodel' is the most-searched renovation term in the US, with 259,750 average monthly searches (https://www.contractormag.com/bath-kitchen/remodeling/article/55135146/study-finds-bathroom-remodels-most-popular-home-renovation-project)",
+                "Journal of Light Construction: Minor kitchen remodels yield a 96% average ROI; major renovations can drop to 38–50% (https://cabinetselect.com/kitchen-remodel-roi/)",
+                "Revive Real Estate: Bathroom remodels return 60–70% on investment nationally and add $13,000–$19,000 in value (https://www.revive.realestate/post/how-much-value-does-a-bathroom-remodel-increase-home-value)",
+                "The Farnsworth Group: 41% of homeowners completed home improvement projects in Q4 2024, with 55% doing DIY (https://www.thefarnsworthgroup.com/blog/diy-difm-pro-home-improvement-trends)",
+                "Angi: Kitchen remodel ROI stats (https://www.angi.com/articles/how-much-does-a-kitchen-remodel-increase-home-value.htm)"
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Plan Blog Post": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Perplexity: Do Research": {
+      "main": [
+        [
+          {
+            "node": "Plan Blog Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Perplexity: Do Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d9bb0cc1-a43d-4a2c-8592-110fa29e9d38",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "49e4fd52f5443143846c3bf275583f2728e3f3162b2617169ded042565639760"
+  },
+  "id": "uoOMjqz1QhJECHn7",
+  "tags": []
+}

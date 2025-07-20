@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content Brief Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-2xl font-bold mb-4">LLM-Powered Content Brief Generator</h1>
+    <form id="briefForm" class="space-y-4">
+      <div>
+        <label class="block font-medium">Primary Keyword:</label>
+        <input type="text" id="primaryKeyword" required class="w-full border rounded p-2">
+      </div>
+      <div>
+        <label class="block font-medium">Secondary Keywords (comma-separated):</label>
+        <textarea id="secondaryKeywords" rows="2" class="w-full border rounded p-2"></textarea>
+      </div>
+      <div>
+        <label class="block font-medium">Target Word Count:</label>
+        <input type="number" id="wordCount" required class="w-full border rounded p-2">
+      </div>
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Generate Brief</button>
+      <div id="loading" class="hidden mt-2 text-blue-500">Loading...</div>
+    </form>
+
+    <div id="briefOutput" class="mt-8 hidden">
+      <h2 class="text-xl font-semibold mb-2">Generated Content Brief</h2>
+      <div id="titles" class="mb-4"></div>
+      <div id="outline" class="mb-4"></div>
+      <div id="keyPoints" class="mb-4"></div>
+      <div id="sources" class="mb-4"></div>
+    </div>
+  </div>
+
+<script>
+  document.getElementById('briefForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    document.getElementById('loading').classList.remove('hidden'); // Remove hidden from classList to show "Loading..."
+    document.getElementById('briefOutput').classList.add('hidden'); // Hides the previous brief output, if any
+
+    const primaryKeyword = document.getElementById('primaryKeyword').value;
+    const secondaryKeywords = document.getElementById('secondaryKeywords').value.split(',').map(k => k.trim()).filter(Boolean);
+    const targetWordCount = parseInt(document.getElementById('wordCount').value);
+
+    const payload = {
+      primaryKeyword,
+      secondaryKeywords,
+      targetWordCount
+    };
+
+    // Send POST request to Express Backend
+    try {
+      const res = await fetch('/api/generate-brief', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload),
+      });
+
+      // response
+      const json = await res.json();
+      const brief = Array.isArray(json) ? json[0] : json;
+
+      // Ensure all expected arrays exist before rendering
+      if (
+        brief &&
+        Array.isArray(brief.suggestedTitles) &&
+        Array.isArray(brief.outline) &&
+        Array.isArray(brief.keyPointsToCover) &&
+        Array.isArray(brief.recommendedSourcesOrStatistics)
+      ) {
+        // Renders Brief to the DOM
+        document.getElementById('titles').innerHTML =
+          `<h3 class="font-bold">Suggested Titles:</h3><ul class="list-disc ml-6">${brief.suggestedTitles.map(t => `<li>${t}</li>`).join('')}</ul>`;
+
+        document.getElementById('outline').innerHTML =
+          `<h3 class="font-bold">Outline:</h3><ul class="list-disc ml-6">${brief.outline.map(o => `<li>${o}</li>`).join('')}</ul>`;
+
+        document.getElementById('keyPoints').innerHTML =
+          `<h3 class="font-bold">Key Points to Cover:</h3><ul class="list-disc ml-6">${brief.keyPointsToCover.map(p => `<li>${p}</li>`).join('')}</ul>`;
+
+        document.getElementById('sources').innerHTML =
+          `<h3 class="font-bold">Recommended Sources/Statistics:</h3>
+          <ul class="list-disc ml-6">
+            ${brief.recommendedSourcesOrStatistics.map(s => {
+              const url = s.match(/https?:\/\/[^\s]+/);
+              if (url) {
+                const link = url[0];
+                const text = s.replace(link, '').trim();
+                return `<li>${text} <a href="${link}" target="_blank" class="text-blue-600 underline">${link}</a></li>`;
+              } else {
+                return `<li>${s}</li>`;
+              }
+            }).join('')}
+          </ul>`;
+
+
+
+        document.getElementById('briefOutput').classList.remove('hidden');
+      } else {
+        alert('Unexpected response structure from webhook.');
+        console.log('Received JSON:', json);
+      }
+    } catch (err) {
+      alert('Error generating brief: ' + (err.name === 'AbortError' ? 'Request timed out' : err.message));
+      console.error(err);
+    } finally {
+      document.getElementById('loading').classList.add('hidden');
+    }
+  });
+</script>
+
+</body>
+</html>
